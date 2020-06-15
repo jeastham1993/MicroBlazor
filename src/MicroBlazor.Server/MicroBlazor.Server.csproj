@@ -1,7 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PackageId>MicroBlazor.Server</PackageId>
+    <Authors>James Eastham</Authors>
+    <Owners>James Eastham</Owners>
+    <Tags>blazor microfrontend web</Tags>
+    <Description>App shell configuration for the MicroBlazor framework.</Description>
+    <ProjectUrl>https://github.com/jeastham1993/MicroBlazor</ProjectUrl>
+    <RepositoryUrl>https://github.com/jeastham1993/MicroBlazor</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionSuffix>alpha</VersionSuffix>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
