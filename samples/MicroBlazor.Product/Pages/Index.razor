@@ -1,0 +1,45 @@
+﻿@page "/"
+@using MicroBlazor.Product.Models
+@using MicroBlazor.Product.Services
+@using MicroBlazor.Server
+<h1>The Model Store</h1>
+<div class="row">
+    <div class="col-9">
+        <div class="row">
+            <div class="col-6">
+                <img src="@Products[0].ImagePath"/>
+            </div>
+            <div class="col-6">
+                <h2>@Products[0].Name</h2>
+                <div class="row">
+                    @foreach (var product in this.Products)
+                    {
+                        <div class="col-4">
+                            <img src="@product.ImagePath"/>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3">
+        @ComponentRenderer.Render(
+            "RelatedProducts")
+    </div>
+</div>
+
+
+@code
+{
+    [Inject]
+    public IProductService ProductService { get; set; }
+
+    protected List<Product> Products { get; set; }
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        this.Products = await this.ProductService.GetProductWithVariants().ConfigureAwait(
+            false);
+    }
+}
