@@ -14,11 +14,34 @@ namespace MicroBlazor.Server
 {
     public static class ServiceExtensions
     {
-        public static IServiceCollection AddMicrofrontends(this IServiceCollection services, string assemblyLoadDirectory)
+		/// <summary>
+		/// Load micro frontend.
+		/// </summary>
+		/// <param name="services">A <see cref="IServiceCollection"/>.</param>
+		/// <param name="assemblyLoadDirectory">The local file path which micro frontend libraries should be loaded from.</param>
+		/// <param name="binDirectory">A directory to load any supporting 3rd party libraries from. Leave as null to use a directory named 'bin' with the configured assemblyLoadDirectory.</param>
+		/// <returns></returns>
+        public static IServiceCollection AddMicrofrontends(this IServiceCollection services, string assemblyLoadDirectory, string binDirectory = null)
         {
             var assembliesToLoad = new List<string>();
+			var binAssemblies = new List<string>();
 
-		    if (Directory.Exists(assemblyLoadDirectory))
+			if (Directory.Exists(
+				Path.Combine(
+					assemblyLoadDirectory,
+					"bin")))
+			{
+				foreach (var file in Directory.GetFiles(
+					Path.Combine(
+						assemblyLoadDirectory,
+						"bin"),
+					"*.dll"))
+				{
+					binAssemblies.Add(file);
+				}
+			}
+
+            if (Directory.Exists(assemblyLoadDirectory))
 		    {
 			    foreach (var file in Directory.GetFiles(
 				    assemblyLoadDirectory,
@@ -44,46 +67,85 @@ namespace MicroBlazor.Server
 
 			var fileCounter = 0;
 
-		    foreach (var file in assembliesToLoad)
+			var successfulLoads = new List<string>();
+
+		    while (successfulLoads.Count != binAssemblies.Count)
 		    {
-			    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(file);
-
-			    foreach (var type in assembly.GetTypes())
+			    foreach (var file in binAssemblies)
 			    {
-				    if (typeof(INavElement).IsAssignableFrom(type))
+				    if (successfulLoads.Contains(file))
 				    {
-					    var loadedType = Activator.CreateInstance(type) as INavElement;
+					    continue;
+				    }
 
-					    if (loadedType != null
-					        && string.IsNullOrEmpty(loadedType.NavText) == false
-					        && string.IsNullOrEmpty(loadedType.NavLink) == false)
+				    try
+				    {
+					    AssemblyLoadContext.Default.LoadFromAssemblyPath(file);
+
+					    successfulLoads.Add(file);
+				    }
+				    catch (ReflectionTypeLoadException)
+				    {
+				    }
+			    }
+		    }
+
+			successfulLoads = new List<string>();
+
+		    foreach (var assemblyPath in assembliesToLoad)
+		    {
+			    if (successfulLoads.Contains(assemblyPath) == false)
+			    {
+				    Console.WriteLine($"Loading {assemblyPath}");
+				    Console.ReadKey();
+
+				    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
+
+				    foreach (var type in assembly.GetTypes())
+				    {
+					    if (typeof(INavElement).IsAssignableFrom(type))
 					    {
-						    NavElements.LoadedNavElements.Add(loadedType);
+						    Console.WriteLine("Loading nav element");
+
+						    var loadedType = Activator.CreateInstance(type) as INavElement;
+
+						    if (loadedType != null
+						        && string.IsNullOrEmpty(loadedType.NavText) == false
+						        && string.IsNullOrEmpty(loadedType.NavLink) == false)
+						    {
+							    NavElements.LoadedNavElements.Add(loadedType);
+						    }
+					    }
+
+					    if (typeof(IServiceInjector).IsAssignableFrom(type))
+					    {
+						    Console.WriteLine("Loading service injector");
+
+						    var loadedType = Activator.CreateInstance(type) as IServiceInjector;
+
+						    services = loadedType.InjectServices(services);
+					    }
+
+					    if (typeof(FrontEndComponent).IsAssignableFrom(type))
+					    {
+						    Console.WriteLine("Loading component");
+
+						    var loadedType = Activator.CreateInstance(type) as ComponentBase;
+
+						    DynamicComponents.Components.Add(
+							    loadedType.GetType().Name,
+							    loadedType);
 					    }
 				    }
 
-				    if (typeof(IServiceInjector).IsAssignableFrom(type))
-				    {
-					    var loadedType = Activator.CreateInstance(type) as IServiceInjector;
+				    RuntimeAssemblies.Assemblies[fileCounter] = assembly;
 
-					    services = loadedType.InjectServices(services);
-				    }
+				    mvcBuilder.AddApplicationPart(assembly);
 
-				    if (typeof(ComponentBase).IsAssignableFrom(type))
-				    {
-					    var loadedType = Activator.CreateInstance(type) as ComponentBase;
+				    successfulLoads.Add(assemblyPath);
 
-					    DynamicComponents.Components.Add(
-						    loadedType.GetType().Name,
-						    loadedType);
-				    }
+				    fileCounter++;
 			    }
-
-			    RuntimeAssemblies.Assemblies[fileCounter] = assembly;
-
-			    mvcBuilder.AddApplicationPart(assembly);
-
-			    fileCounter++;
 		    }
 
 		    return services;
