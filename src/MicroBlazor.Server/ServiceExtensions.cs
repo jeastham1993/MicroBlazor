@@ -96,9 +96,6 @@ namespace MicroBlazor.Server
 		    {
 			    if (successfulLoads.Contains(assemblyPath) == false)
 			    {
-				    Console.WriteLine($"Loading {assemblyPath}");
-				    Console.ReadKey();
-
 				    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
 
 				    foreach (var type in assembly.GetTypes())

@@ -10,7 +10,7 @@
     <ProjectUrl>https://github.com/jeastham1993/MicroBlazor</ProjectUrl>
     <RepositoryUrl>https://github.com/jeastham1993/MicroBlazor</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <VersionPrefix>0.0.2</VersionPrefix>
+    <VersionPrefix>0.0.3</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
